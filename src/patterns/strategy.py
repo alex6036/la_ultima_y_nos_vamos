@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+from datetime import datetime  # Corrección: importar datetime
 
 class DesempateStrategy(ABC):
     """Interfaz para las estrategias de desempate."""
@@ -11,6 +12,8 @@ class AlphabeticalStrategy(DesempateStrategy):
     """Elige la primera opción alfabéticamente en caso de empate."""
     def resolve(self, poll):
         results = poll.get_results()
+        if not results:
+            return None  # No hay opciones para desempatar
         max_votes = max(results.values())
         winners = [option for option, count in results.items() if count == max_votes]
         return min(winners)  # Elige la primera opción alfabéticamente
@@ -19,6 +22,8 @@ class RandomStrategy(DesempateStrategy):
     """Elige una opción al azar en caso de empate."""
     def resolve(self, poll):
         results = poll.get_results()
+        if not results:
+            return None  # No hay opciones para desempatar
         max_votes = max(results.values())
         winners = [option for option, count in results.items() if count == max_votes]
         return random.choice(winners)  # Elige una opción al azar
