@@ -2,7 +2,7 @@ import json
 import os
 from threading import Lock
 from src.models.token_nft import TokenNFT
-from src.config import RUTA_ALMACENAMIENTO, TIPO_ALMACENAMIENTO
+from config import RUTA_ALMACENAMIENTO, TIPO_ALMACENAMIENTO
 from datetime import datetime
 
 class NFTRepository:

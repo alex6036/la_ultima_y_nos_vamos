@@ -6,7 +6,7 @@ from src.repositories.encuesta_repo import EncuestaRepository
 from src.repositories.usuario_repo import UsuarioRepository
 from src.repositories.nft_repo import NFTRepository
 from src.patterns.factory import SimplePollFactory
-from src.config import RUTA_ALMACENAMIENTO, TIPO_ALMACENAMIENTO
+from config import RUTA_ALMACENAMIENTO, TIPO_ALMACENAMIENTO
 from src.ui.gradio_app import GradioUI
 
 def main():
