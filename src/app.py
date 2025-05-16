@@ -2,12 +2,12 @@ from src.services.poll_service import PollService
 from src.services.user_service import UserService
 from src.services.nft_service import NFTService
 from src.services.chatbot_service import ChatbotService
-from src.repositories.encuesta_repository import EncuestaRepository
-from src.repositories.usuario_repository import UsuarioRepository
-from src.repositories.nft_repository import NFTRepository
+from src.repositories.encuesta_repo import EncuestaRepository
+from src.repositories.usuario_repo import UsuarioRepository
+from src.repositories.nft_repo import NFTRepository
 from src.patterns.factory import SimplePollFactory
 from src.config import RUTA_ALMACENAMIENTO, TIPO_ALMACENAMIENTO
-from src.ui.gradio_ui import GradioUI
+from src.ui.gradio_app import GradioUI
 
 def main():
     try:

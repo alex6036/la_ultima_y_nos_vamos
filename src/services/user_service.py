@@ -1,4 +1,4 @@
-from src.repositories.usuario_repository import UsuarioRepository
+from src.repositories.usuario_repo import UsuarioRepository
 from src.models.usuario import User
 
 class UserService:

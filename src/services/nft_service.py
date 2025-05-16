@@ -1,6 +1,6 @@
 from src.models.token_nft import TokenNFT
-from src.repositories.nft_repository import NFTRepository
-from src.repositories.usuario_repository import UsuarioRepository
+from src.repositories.nft_repo import NFTRepository
+from src.repositories.usuario_repo import UsuarioRepository
 
 class NFTService:
     def __init__(self, nft_repository, usuario_repository):
