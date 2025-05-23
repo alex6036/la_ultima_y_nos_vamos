@@ -2,7 +2,12 @@
   {
     "username": "alex",
     "password_hash": "6b76ae1d8541737681c06a3aa95c81d2aab93ec29875c7d1b9a75ef97a94dc09",
-    "session_token": "62c978af-1957-48fc-b7fd-63707fe6772b",
-    "tokens": []
+    "session_token": "f28c01b7-9aae-44f1-b8ce-f029e59d47b5",
+    "tokens": [
+      "94b1fea7-e6ff-4ef1-afd5-48cb8072b42a",
+      "84a091b2-7360-4389-8fcd-501aba3d926c",
+      "a447940f-3152-423b-a089-74bd9dc350b3",
+      "3339e37f-8bf7-45ab-bdd3-82f8cc574711"
+    ]
   }
 ]

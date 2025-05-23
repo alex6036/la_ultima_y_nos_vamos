@@ -13,7 +13,6 @@ class GradioUI:
         self.port = port
 
     def launch(self):
-        """Inicia la interfaz web con Gradio."""
         custom_css = """
         body {
             background: #0a1e4d;
@@ -69,7 +68,7 @@ class GradioUI:
         with gr.Blocks(css=custom_css) as app:
             gr.Markdown("# Plataforma de Votaciones en Vivo para Streamers")
 
-            # Sección de autenticación
+            # Autenticación
             gr.Markdown("## Autenticación")
             with gr.Row():
                 with gr.Column():
@@ -85,7 +84,7 @@ class GradioUI:
                     register_button = gr.Button("Registrar")
                     register_output = gr.Textbox(label="Resultado")
 
-            # Sección de encuestas
+            # Encuestas
             gr.Markdown("## Encuestas")
             with gr.Row():
                 with gr.Column():
@@ -109,21 +108,17 @@ class GradioUI:
                     vote_button = gr.Button("Votar")
                     vote_output = gr.Textbox(label="Resultado del Voto")
 
-            # Sección de resultados
+            # Resultados
             gr.Markdown("## Resultados de la Encuesta")
-            results_table = gr.Dataframe(
-                label="Resultados",
-                headers=["Opción", "Porcentaje (%)"],
-                value=[]  # Inicialmente vacío
-            )
+            results_table = gr.Dataframe(label="Resultados", headers=["Opción", "Porcentaje (%)"], value=[])
 
-            # Sección de chatbot
+            # Chatbot
             gr.Markdown("## Chatbot")
             chatbot_input = gr.Textbox(label="Pregunta")
             chatbot_output = gr.Textbox(label="Respuesta")
             chatbot_button = gr.Button("Enviar Pregunta")
 
-            # Sección de tokens
+            # Tokens NFT
             gr.Markdown("## Tus Tokens NFT")
             token_list = gr.Dataframe(label="Tus Tokens", headers=["Token ID", "Encuesta", "Opción"])
             transfer_token_id = gr.Textbox(label="ID del Token a Transferir")
@@ -131,12 +126,12 @@ class GradioUI:
             transfer_button = gr.Button("Transferir Token")
             transfer_output = gr.Textbox(label="Resultado de la Transferencia")
 
-            # Conectar eventos
+            # Eventos
             register_button.click(self.register, inputs=[register_username, register_password], outputs=register_output)
             login_button.click(self.login, inputs=[login_username, login_password], outputs=login_output).then(
                 self.view_tokens, inputs=[login_username, login_output], outputs=token_list
             )
-            create_poll_button.click(self.create_poll, inputs=[question_input, options_input, duration_input, poll_type_input, login_output, login_username], outputs=[create_poll_output, poll_list, option_input]).then(
+            create_poll_button.click(self.create_poll, inputs=[question_input, options_input, duration_input, poll_type_input, login_output], outputs=[create_poll_output, poll_list, option_input]).then(
                 self.get_poll_results, inputs=[poll_list], outputs=results_table
             )
             refresh_polls_button.click(self.refresh_polls, inputs=[], outputs=[poll_list, option_input]).then(
@@ -158,119 +153,93 @@ class GradioUI:
         app.launch(server_port=self.port)
 
     def _get_active_polls(self):
-        """Devuelve una lista de IDs de encuestas activas."""
-        print("Gradio: _get_active_polls - Obteniendo encuestas activas")
         polls = self.poll_service.encuesta_repository.get_all_polls()
-        active_polls = [poll.poll_id for poll in polls if poll.is_active()]
-        print(f"Gradio: _get_active_polls - Encuestas activas: {active_polls}")
-        return active_polls
+        return [poll.poll_id for poll in polls if poll.is_active()]
 
     def get_poll_options(self, poll_id):
-        """Obtiene las opciones de una encuesta dada su poll_id."""
-        print(f"Gradio: get_poll_options - Obteniendo opciones para poll_id={poll_id}")
         if not poll_id:
-            print("Gradio: get_poll_options - No se proporcionó poll_id, devolviendo lista vacía")
             return []
         poll = self.poll_service.encuesta_repository.get_poll(poll_id)
-        if poll:
-            print(f"Gradio: get_poll_options - Encuesta encontrada: {poll.__dict__}")
-            print(f"Gradio: get_poll_options - Opciones devueltas: {poll.options}")
-            return poll.options
-        else:
-            print(f"Gradio: get_poll_options - Encuesta no encontrada: {poll_id}")
-            return []
+        return poll.options if poll else []
 
     def get_poll_options_for_update(self, poll_id):
-        """Obtiene las opciones de una encuesta y las devuelve en formato gr.update."""
         options = self.get_poll_options(poll_id)
-        print(f"Gradio: get_poll_options_for_update - Actualizando option_input con opciones: {options}")
         return gr.update(choices=options, value=None)
 
     def get_poll_results(self, poll_id):
-        """Obtiene los resultados de una encuesta y los formatea como tabla."""
-        print(f"Gradio: get_poll_results - Obteniendo resultados para poll_id={poll_id}")
         if not poll_id:
-            print("Gradio: get_poll_results - No se proporcionó poll_id, devolviendo tabla vacía")
             return []
         try:
             results = self.poll_service.get_partial_results(poll_id)
-            percentages = results["percentages"]
-            result_table = [[option, f"{percentage:.1f}"] for option, percentage in percentages.items()]
-            print(f"Gradio: get_poll_results - Resultados formateados: {result_table}")
-            return result_table
-        except ValueError as e:
-            print(f"Gradio: get_poll_results - Error: {e}")
+            return [[option, f"{percentage:.1f}"] for option, percentage in results["percentages"].items()]
+        except ValueError:
             return []
 
     def register(self, username, password):
-        print(f"Gradio: register - Registrando usuario {username}")
         success = self.user_service.register(username, password)
         return "Registro exitoso" if success else "Error en el registro"
 
     def login(self, username, password):
-        print(f"Gradio: login - Intentando login para usuario {username}")
         success = self.user_service.login(username, password)
         return "Login exitoso" if success else "Login fallido"
 
-    def create_poll(self, question, options, duration, poll_type, login_status, username):
-        print(f"Gradio: create_poll - Creando encuesta con pregunta: {question}")
+    def create_poll(self, question, options, duration, poll_type, login_status):
         if login_status != "Login exitoso":
             return "Debes iniciar sesión para crear una encuesta", gr.update(), gr.update()
         try:
             options_list = [opt.strip() for opt in options.split(",")]
-            poll_id = self.poll_service.create_poll(question, options_list, duration, poll_type, username)
+            poll_id = self.poll_service.create_poll(question, options_list, duration, poll_type)
             active_polls = self._get_active_polls()
             first_poll = active_polls[0] if active_polls else None
             return f"Encuesta creada con ID: {poll_id}", gr.update(choices=active_polls, value=first_poll), gr.update(choices=self.get_poll_options(first_poll))
         except Exception as e:
-            print(f"Gradio: create_poll - Error: {e}")
             return f"Error al crear encuesta: {str(e)}", gr.update(), gr.update()
 
     def refresh_polls(self):
-        print("Gradio: refresh_polls - Refrescando lista de encuestas")
         active_polls = self._get_active_polls()
         first_poll = active_polls[0] if active_polls else None
         return gr.update(choices=active_polls, value=first_poll), gr.update(choices=self.get_poll_options(first_poll))
 
     def refresh_options(self, poll_id):
-        print(f"Gradio: refresh_options - Refrescando opciones para poll_id={poll_id}")
         return gr.update(choices=self.get_poll_options(poll_id), value=None)
 
     def vote(self, poll_id, username, option, weight, login_status):
-        print(f"Gradio: vote - Usuario {username} votando en poll {poll_id} opción {option} con peso {weight}")
         if login_status != "Login exitoso":
             return "Debes iniciar sesión para votar", None
+
         try:
             weight_int = int(weight)
         except ValueError:
             return "Peso inválido. Debe ser un número entero", None
-        success, message, tokens = self.poll_service.vote(poll_id, username, option, weight_int)
-        tokens_data = [(token.token_id, token.poll_id, token.option) for token in tokens] if tokens else []
-        return message, gr.update(value=tokens_data)
+
+        valid_options = self.get_poll_options(poll_id)
+        if option not in valid_options:
+            return f"Opción inválida. Las opciones válidas son: {', '.join(valid_options)}", None
+
+        try:
+            success, message, tokens = self.poll_service.vote(poll_id, username, option, weight_int)
+            tokens_data = [(token.token_id, token.poll_id, token.option) for token in tokens] if tokens else []
+            return message, gr.update(value=tokens_data)
+        except Exception as e:
+            return f"Error al votar: {str(e)}", None
 
     def view_tokens(self, username, login_status):
-        print(f"Gradio: view_tokens - Mostrando tokens para usuario {username}")
         if login_status != "Login exitoso":
             return []
         tokens = self.nft_service.get_user_tokens(username)
-        token_list = [(token.token_id, token.poll_id, token.option) for token in tokens]
-        return token_list
+        return [(token.token_id, token.poll_id, token.option) for token in tokens]
 
     def transfer(self, token_id, new_owner, username, login_status):
-        print(f"Gradio: transfer - Transferencia token {token_id} a {new_owner} por usuario {username}")
         if login_status != "Login exitoso":
             return "Debes iniciar sesión para transferir tokens", None
         success = self.nft_service.transfer_token(token_id, username, new_owner)
         if success:
             tokens = self.nft_service.get_user_tokens(username)
-            token_list = [(token.token_id, token.poll_id, token.option) for token in tokens]
-            return "Transferencia exitosa", gr.update(value=token_list)
+            return "Transferencia exitosa", gr.update(value=[(t.token_id, t.poll_id, t.option) for t in tokens])
         else:
             return "Error en la transferencia", None
 
     def chat(self, question, username, login_status):
-        print(f"Gradio: chat - Pregunta del usuario {username}: {question}")
         if login_status != "Login exitoso":
             return "Debes iniciar sesión para usar el chatbot"
-        response = self.chatbot_service.ask(question, username)
-        return response
+        return self.chatbot_service.ask(question, username)

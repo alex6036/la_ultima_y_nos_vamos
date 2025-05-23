@@ -13,39 +13,48 @@ class PollService:
             raise ValueError("Se requiere una fábrica de encuestas para crear una encuesta.")
         poll = self.poll_factory.create_poll(None, question, options, duration_seconds, poll_type)
         self.encuesta_repository.save_poll(poll)
-        return poll
+        return poll.poll_id  # ✅ Devuelve solo el ID de la encuesta
 
     def vote(self, poll_id, username, option, weight=1):
-        print(f"PollService: vote - Iniciando votación: poll_id={poll_id}, username={username}, option={option}, weight={weight}")
-        poll = self.encuesta_repository.get_poll(poll_id)
-        if not poll:
-            print(f"PollService: vote - Encuesta no encontrada: {poll_id}")
-            raise ValueError("Encuesta no encontrada.")
-        print(f"PollService: vote - Encuesta encontrada: {poll.__dict__}")
-        if poll.status == "closed":
-            print(f"PollService: vote - Encuesta cerrada: {poll_id}")
-            raise ValueError("La encuesta está cerrada.")
-        # Verificar has_user_voted ANTES de cualquier operación
-        has_voted = self.encuesta_repository.has_user_voted(poll_id, username)
-        print(f"PollService: vote - Has user voted: {has_voted}")
-        if has_voted and poll.poll_type == "simple":
-            print(f"PollService: vote - El usuario ya ha votado: {username} en {poll_id}")
-            raise ValueError("El usuario ya ha votado.")
-        if option not in poll.options:
-            print(f"PollService: vote - Opción no válida: {option} no está en {poll.options}")
-            raise ValueError("Opción no válida.")
-        # Añadir el voto a poll.votes usando la estrategia
-        self.vote_strategy.vote(poll, username, option, weight=weight)
-        # Crear y guardar el objeto Vote
-        vote = Vote(poll_id, username, option)
-        print(f"PollService: vote - Voto generado: {vote.__dict__}")
-        self.encuesta_repository.save_vote(vote)
-        self.encuesta_repository.save_poll(poll)
-        # Generar el token NFT
-        if self.nft_service:
-            token = self.nft_service.mint_token(username, poll_id, option)
-            print(f"PollService: vote - Token NFT generado: ID {token.token_id}")
-        return vote
+        try:
+            print(f"PollService: vote - Iniciando votación: poll_id={poll_id}, username={username}, option={option}, weight={weight}")
+            poll = self.encuesta_repository.get_poll(poll_id)
+            if not poll:
+                print(f"PollService: vote - Encuesta no encontrada: {poll_id}")
+                return False, "Encuesta no encontrada", []
+
+            print(f"PollService: vote - Encuesta encontrada: {poll.__dict__}")
+            if poll.status == "closed":
+                print(f"PollService: vote - Encuesta cerrada: {poll_id}")
+                return False, "La encuesta está cerrada", []
+
+            has_voted = self.encuesta_repository.has_user_voted(poll_id, username)
+            print(f"PollService: vote - Has user voted: {has_voted}")
+            if has_voted and poll.poll_type == "simple":
+                print(f"PollService: vote - El usuario ya ha votado: {username} en {poll_id}")
+                return False, "El usuario ya ha votado", []
+
+            if option not in poll.options:
+                print(f"PollService: vote - Opción no válida: {option} no está en {poll.options}")
+                return False, "Opción no válida", []
+
+            self.vote_strategy.vote(poll, username, option, weight=weight)
+            vote = Vote(poll_id, username, option)
+            print(f"PollService: vote - Voto generado: {vote.__dict__}")
+            self.encuesta_repository.save_vote(vote)
+            self.encuesta_repository.save_poll(poll)
+
+            tokens = []
+            if self.nft_service:
+                token = self.nft_service.mint_token(username, poll_id, option)
+                print(f"PollService: vote - Token NFT generado: ID {token.token_id}")
+                tokens.append(token)
+
+            return True, "Voto registrado correctamente", tokens
+
+        except Exception as e:
+            print(f"PollService: vote - Error: {str(e)}")
+            return False, f"Error al votar: {str(e)}", []
 
     def get_partial_results(self, poll_id):
         poll = self.encuesta_repository.get_poll(poll_id)
