@@ -3,7 +3,7 @@ from src.repositories.nft_repo import NFTRepository
 from src.repositories.usuario_repo import UsuarioRepository
 
 class NFTService:
-    def __init__(self, nft_repository, usuario_repository):
+    def __init__(self, nft_repository: NFTRepository, usuario_repository: UsuarioRepository):
         self.nft_repository = nft_repository
         self.usuario_repository = usuario_repository
 
@@ -38,10 +38,13 @@ class NFTService:
         if not user_exists:
             print(f"Error: Nuevo propietario {new_owner} no existe")
             raise ValueError("El nuevo propietario no existe.")
+
+        # Actualiza el propietario del token
         token.owner = new_owner
         print(f"Actualizando propietario del token {token_id} a {new_owner}")
         self.nft_repository.transfer_nft(token_id, new_owner)
-        # Actualizar las listas de tokens de los usuarios
+
+        # Actualiza las listas de tokens de los usuarios
         current_user = self.usuario_repository.get_user(current_owner)
         new_user = self.usuario_repository.get_user(new_owner)
         if current_user:
@@ -52,6 +55,8 @@ class NFTService:
             new_user.add_token(token_id)
             self.usuario_repository.save_user(new_user)
             print(f"Token {token_id} añadido a la lista de {new_owner}")
+
+        return True  # ✅ Devuelve True si la transferencia fue exitosa
 
     def get_user_tokens(self, username):
         """Obtiene todos los tokens NFT de un usuario."""
