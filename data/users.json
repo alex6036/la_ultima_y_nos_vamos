@@ -1,1 +1,8 @@
-[]
+[
+  {
+    "username": "alex",
+    "password_hash": "6b76ae1d8541737681c06a3aa95c81d2aab93ec29875c7d1b9a75ef97a94dc09",
+    "session_token": "62c978af-1957-48fc-b7fd-63707fe6772b",
+    "tokens": []
+  }
+]
